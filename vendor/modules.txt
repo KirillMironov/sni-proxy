@@ -1,0 +1,21 @@
+# github.com/elazarl/goproxy v1.7.2
+## explicit; go 1.20
+github.com/elazarl/goproxy
+github.com/elazarl/goproxy/internal/http1parser
+github.com/elazarl/goproxy/internal/signer
+# github.com/kelseyhightower/envconfig v1.4.0
+## explicit
+github.com/kelseyhightower/envconfig
+# golang.org/x/net v0.35.0
+## explicit; go 1.18
+golang.org/x/net/http/httpguts
+golang.org/x/net/http2
+golang.org/x/net/http2/hpack
+golang.org/x/net/idna
+golang.org/x/net/internal/httpcommon
+# golang.org/x/text v0.22.0
+## explicit; go 1.18
+golang.org/x/text/secure/bidirule
+golang.org/x/text/transform
+golang.org/x/text/unicode/bidi
+golang.org/x/text/unicode/norm
