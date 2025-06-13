@@ -30,6 +30,8 @@ func run() error {
 	}
 
 	proxy := goproxy.NewProxyHttpServer()
+	proxy.KeepDestinationHeaders = true
+	proxy.AllowHTTP2 = true
 
 	upstream, err := url.Parse(config.UpstreamProxy)
 	if err != nil {
