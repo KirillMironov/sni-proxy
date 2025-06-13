@@ -24,4 +24,4 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${{ vars.REGISTRY_URL }}/${{ GITEA_REPOSITORY_NAME }}:latest
+          tags: ${{ vars.REGISTRY_URL }}/proxy-adapter:latest
