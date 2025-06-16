@@ -16,7 +16,7 @@ import (
 
 const (
 	clientHelloMaxSize = 1 << 12 // 4KB max to peek ClientHello
-	clietnHelloTimeout = 5 * time.Second
+	clientHelloTimeout = 5 * time.Second
 )
 
 type Config struct {
@@ -59,7 +59,10 @@ func handleConnection(clientConn net.Conn, config Config) {
 	defer clientConn.Close()
 
 	// set a read deadline for ClientHello peek
-	clientConn.SetReadDeadline(time.Now().Add(clietnHelloTimeout))
+	err := clientConn.SetReadDeadline(time.Now().Add(clientHelloTimeout))
+	if err != nil {
+		return
+	}
 
 	// peek first bytes for ClientHello
 	buf := make([]byte, clientHelloMaxSize)
@@ -148,21 +151,6 @@ func handleConnection(clientConn net.Conn, config Config) {
 	<-done // wait for one side to finish
 
 	log.Printf("connection closed for host %s", sniHost)
-}
-
-// ConnWithPrepend wraps a net.Conn and prepends some bytes before forwarding reads to the underlying conn
-type ConnWithPrepend struct {
-	net.Conn
-	prependBytes []byte
-}
-
-func (c *ConnWithPrepend) Read(b []byte) (int, error) {
-	if len(c.prependBytes) > 0 {
-		n := copy(b, c.prependBytes)
-		c.prependBytes = c.prependBytes[n:]
-		return n, nil
-	}
-	return c.Conn.Read(b)
 }
 
 // parseSNI extracts the SNI hostname from a TLS ClientHello packet.
