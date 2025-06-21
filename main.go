@@ -137,5 +137,7 @@ func handleConnection(conn net.Conn, config Config) {
 		}
 	}()
 
+	wg.Wait()
+
 	log.Printf("connection closed for host %s", sni)
 }
