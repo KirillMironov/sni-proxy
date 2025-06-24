@@ -1,6 +1,11 @@
 name: build and push
 
-on: [push]
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - 'v*'
 
 jobs:
   build:
@@ -20,8 +25,20 @@ jobs:
           username: ${{ vars.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_TOKEN }}
 
+      - name: docker image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ vars.REGISTRY_URL }}/proxy-adapter
+          tags: |
+            # on tag pushes, use the actual tag name (v0.1.0)
+            type=ref,event=tag
+            # on branch pushes, always tag as 'latest'
+            type=raw,value=latest,enable={{is_branch}}
+
       - name: build and push
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${{ vars.REGISTRY_URL }}/proxy-adapter:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
