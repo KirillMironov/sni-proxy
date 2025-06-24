@@ -34,7 +34,7 @@ jobs:
             # on tag pushes, use the actual tag name (v0.1.0)
             type=ref,event=tag
             # on branch pushes, always tag as 'latest'
-            type=raw,value=latest,enable={{is_branch}}
+            type=raw,value=latest,enable=${{ GITEA.ref_type != 'tag' }}
 
       - name: build and push
         uses: docker/build-push-action@v6
