@@ -5,8 +5,9 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -25,7 +26,8 @@ type Config struct {
 
 func main() {
 	if err := run(); err != nil {
-		log.Fatal(err)
+		slog.Error("failed to run", slog.Any("error", err))
+		os.Exit(1)
 	}
 }
 
@@ -39,12 +41,12 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	log.Printf("listening on %s", config.ListenAddress)
+	slog.Info("server is listening", slog.String("address", config.ListenAddress))
 
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
-			log.Printf("accept error: %v", err)
+			slog.Error("failed to accept connection", slog.Any("error", err))
 			continue
 		}
 
@@ -62,10 +64,10 @@ func handleConnection(conn net.Conn, config Config) {
 
 	sni, reader, err := sniFromConn(conn)
 	if err != nil {
-		log.Printf("failed to get sni from conn: %v", err)
+		slog.Error("failed to get sni from connection", slog.Any("error", err))
 		return
 	}
-	log.Printf("client sni: %s", sni)
+	slog.Info("new client", slog.String("sni", sni))
 
 	// reset deadline to no deadline
 	_ = conn.SetReadDeadline(time.Time{})
@@ -73,7 +75,7 @@ func handleConnection(conn net.Conn, config Config) {
 	// dial upstream HTTP proxy
 	upstreamConn, err := net.Dial("tcp", config.UpstreamProxy)
 	if err != nil {
-		log.Printf("failed to connect to upstream proxy: %v", err)
+		slog.Error("failed to connect to upstream proxy", slog.Any("error", err))
 		return
 	}
 	defer upstreamConn.Close()
@@ -86,7 +88,7 @@ func handleConnection(conn net.Conn, config Config) {
 
 	_, err = upstreamConn.Write([]byte(connectReq))
 	if err != nil {
-		log.Printf("failed to send CONNECT to upstream proxy: %v", err)
+		slog.Error("failed to write connect request to upstream proxy", slog.Any("error", err))
 		return
 	}
 
@@ -94,11 +96,11 @@ func handleConnection(conn net.Conn, config Config) {
 	respReader := bufio.NewReader(upstreamConn)
 	respLine, err := respReader.ReadString('\n')
 	if err != nil {
-		log.Printf("failed to read response from upstream proxy: %v", err)
+		slog.Error("failed to read response from upstream proxy", slog.Any("error", err))
 		return
 	}
 	if !strings.Contains(respLine, "200") {
-		log.Printf("upstream proxy rejected CONNECT: %s", respLine)
+		slog.Error("upstream proxy rejected connect request", slog.String("response", respLine))
 		return
 	}
 
@@ -106,7 +108,7 @@ func handleConnection(conn net.Conn, config Config) {
 	for {
 		line, err := respReader.ReadString('\n')
 		if err != nil {
-			log.Printf("failed to read response headers: %v", err)
+			slog.Error("failed to read response headers", slog.Any("error", err))
 			return
 		}
 		if line == "\r\n" {
@@ -139,5 +141,5 @@ func handleConnection(conn net.Conn, config Config) {
 
 	wg.Wait()
 
-	log.Printf("connection closed for host %s", sni)
+	slog.Info("client connection closed", slog.String("sni", sni))
 }
