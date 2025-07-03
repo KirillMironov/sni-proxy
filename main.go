@@ -15,11 +15,10 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
-const clientHelloTimeout = 5 * time.Second
-
 type Config struct {
-	ListenAddress string `envconfig:"LISTEN_ADDRESS" default:":443"`
-	Proxy         struct {
+	ListenAddress      string        `envconfig:"LISTEN_ADDRESS" default:":443"`
+	ClientHelloTimeout time.Duration `envconfig:"CLIENT_HELLO_TIMEOUT" default:"5s"`
+	Proxy              struct {
 		Address  string `envconfig:"PROXY_ADDRESS" required:"true"`
 		Username string `envconfig:"PROXY_USERNAME" required:"true"`
 		Password string `envconfig:"PROXY_PASSWORD" required:"true"`
@@ -60,7 +59,7 @@ func handleConnection(conn net.Conn, config Config) {
 	defer conn.Close()
 
 	// set a read deadline for ClientHello peek
-	if err := conn.SetReadDeadline(time.Now().Add(clientHelloTimeout)); err != nil {
+	if err := conn.SetReadDeadline(time.Now().Add(config.ClientHelloTimeout)); err != nil {
 		return
 	}
 
