@@ -19,9 +19,11 @@ const clientHelloTimeout = 5 * time.Second
 
 type Config struct {
 	ListenAddress string `envconfig:"LISTEN_ADDRESS" default:":443"`
-	UpstreamProxy string `envconfig:"UPSTREAM_PROXY" required:"true"`
-	ProxyUsername string `envconfig:"PROXY_USERNAME" required:"true"`
-	ProxyPassword string `envconfig:"PROXY_PASSWORD" required:"true"`
+	Proxy         struct {
+		Address  string `envconfig:"PROXY_ADDRESS" required:"true"`
+		Username string `envconfig:"PROXY_USERNAME" required:"true"`
+		Password string `envconfig:"PROXY_PASSWORD" required:"true"`
+	}
 }
 
 func main() {
@@ -73,7 +75,7 @@ func handleConnection(conn net.Conn, config Config) {
 	_ = conn.SetReadDeadline(time.Time{})
 
 	// dial upstream HTTP proxy
-	upstreamConn, err := net.Dial("tcp", config.UpstreamProxy)
+	upstreamConn, err := net.Dial("tcp", config.Proxy.Address)
 	if err != nil {
 		slog.Error("failed to connect to upstream proxy", slog.Any("error", err))
 		return
@@ -82,7 +84,7 @@ func handleConnection(conn net.Conn, config Config) {
 
 	// send CONNECT request to upstream proxy with Basic Auth
 	targetAddr := sni + ":443"
-	auth := config.ProxyUsername + ":" + config.ProxyPassword
+	auth := config.Proxy.Username + ":" + config.Proxy.Password
 	authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))
 	connectReq := fmt.Sprintf("CONNECT %s HTTP/1.1\r\nHost: %s\r\nProxy-Authorization: %s\r\n\r\n", targetAddr, targetAddr, authHeader)
 
