@@ -3,10 +3,11 @@ package main
 import (
 	"bufio"
 	"encoding/base64"
-	"fmt"
 	"io"
 	"log/slog"
 	"net"
+	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -82,13 +83,19 @@ func handleConnection(conn net.Conn, config Config) {
 	defer upstreamConn.Close()
 
 	// send CONNECT request to upstream proxy with Basic Auth
-	targetAddr := sni + ":443"
-	auth := config.Proxy.Username + ":" + config.Proxy.Password
-	authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))
-	connectReq := fmt.Sprintf("CONNECT %s HTTP/1.1\r\nHost: %s\r\nProxy-Authorization: %s\r\n\r\n", targetAddr, targetAddr, authHeader)
+	credentials := config.Proxy.Username + ":" + config.Proxy.Password
+	authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(credentials))
 
-	_, err = upstreamConn.Write([]byte(connectReq))
-	if err != nil {
+	connectReq := &http.Request{
+		URL:    new(url.URL),
+		Method: http.MethodConnect,
+		Host:   net.JoinHostPort(sni, ":443"),
+		Header: http.Header{
+			"Proxy-Authorization": []string{authHeader},
+		},
+	}
+
+	if err = connectReq.Write(upstreamConn); err != nil {
 		slog.Error("failed to write connect request to upstream proxy", slog.Any("error", err))
 		return
 	}
