@@ -27,6 +27,9 @@ type Config struct {
 }
 
 func main() {
+	logger := slog.New(newHandler(os.Stdout, slog.LevelInfo))
+	slog.SetDefault(logger)
+
 	if err := run(); err != nil {
 		slog.Error("failed to run", slog.Any("error", err))
 		os.Exit(1)
