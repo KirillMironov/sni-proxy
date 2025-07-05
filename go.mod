@@ -1,4 +1,4 @@
-module git.capy.fun/proxy-adapter
+module git.capy.fun/sni-proxy
 
 go 1.24.2
 
