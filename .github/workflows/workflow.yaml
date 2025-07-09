@@ -29,7 +29,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ vars.REGISTRY_URL }}/sni-proxy
+          images: ${{ vars.REGISTRY_URL }}/${{ vars.REGISTRY_USERNAME }}/sni-proxy
           tags: |
             # on tag pushes, use the actual tag name (v0.1.0)
             type=ref,event=tag
