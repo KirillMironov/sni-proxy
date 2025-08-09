@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -104,27 +103,14 @@ func handleConnection(conn net.Conn, config Config) {
 	}
 
 	// read upstream proxy response
-	respReader := bufio.NewReader(upstreamConn)
-	respLine, err := respReader.ReadString('\n')
+	resp, err := http.ReadResponse(bufio.NewReader(upstreamConn), connectReq)
 	if err != nil {
 		slog.Error("failed to read response from upstream proxy", slog.Any("error", err))
 		return
 	}
-	if !strings.Contains(respLine, "200") {
-		slog.Error("upstream proxy rejected connect request", slog.String("response", respLine))
+	if resp.StatusCode != http.StatusOK {
+		slog.Error("upstream proxy rejected connect request", slog.Int("code", resp.StatusCode))
 		return
-	}
-
-	// consume remaining headers
-	for {
-		line, err := respReader.ReadString('\n')
-		if err != nil {
-			slog.Error("failed to read response headers", slog.Any("error", err))
-			return
-		}
-		if line == "\r\n" {
-			break
-		}
 	}
 
 	var wg sync.WaitGroup
