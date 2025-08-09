@@ -91,7 +91,7 @@ func handleConnection(conn net.Conn, config Config) {
 	connectReq := &http.Request{
 		URL:    new(url.URL),
 		Method: http.MethodConnect,
-		Host:   net.JoinHostPort(sni, ":443"),
+		Host:   net.JoinHostPort(sni, "443"),
 		Header: http.Header{
 			"Proxy-Authorization": []string{authHeader},
 		},
