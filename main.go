@@ -1,27 +1,25 @@
 package main
 
 import (
-	"bufio"
-	"encoding/base64"
+	"fmt"
 	"io"
 	"log/slog"
 	"net"
-	"net/http"
-	"net/url"
 	"os"
 	"sync"
 	"time"
 
 	"github.com/kelseyhightower/envconfig"
+
+	"git.capy.fun/sni-proxy/upstream"
 )
 
 type Config struct {
 	ListenAddress      string        `envconfig:"LISTEN_ADDRESS" default:":443"`
 	ClientHelloTimeout time.Duration `envconfig:"CLIENT_HELLO_TIMEOUT" default:"5s"`
-	Proxy              struct {
-		Address  string `envconfig:"PROXY_ADDRESS" required:"true"`
-		Username string `envconfig:"PROXY_USERNAME" required:"true"`
-		Password string `envconfig:"PROXY_PASSWORD" required:"true"`
+	Upstream           struct {
+		Type            UpstreamType `envconfig:"UPSTREAM_TYPE" default:"http-proxy"`
+		HttpProxyConfig upstream.HttpProxyConfig
 	}
 }
 
@@ -41,6 +39,21 @@ func run() error {
 		return err
 	}
 
+	var (
+		up  Upstream
+		err error
+	)
+
+	switch config.Upstream.Type {
+	case UpstreamTypeHttpProxy:
+		up = upstream.NewHttpProxy(config.Upstream.HttpProxyConfig)
+	default:
+		return fmt.Errorf("unsupported upstream type: %s", config.Upstream.Type)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to initialize upstream: %w", err)
+	}
+
 	ln, err := net.Listen("tcp", config.ListenAddress)
 	if err != nil {
 		return err
@@ -54,11 +67,11 @@ func run() error {
 			continue
 		}
 
-		go handleConnection(conn, config)
+		go handleConnection(conn, up, config)
 	}
 }
 
-func handleConnection(conn net.Conn, config Config) {
+func handleConnection(conn net.Conn, up Upstream, config Config) {
 	defer conn.Close()
 
 	// set a read deadline for ClientHello peek
@@ -76,42 +89,13 @@ func handleConnection(conn net.Conn, config Config) {
 	// reset deadline to no deadline
 	_ = conn.SetReadDeadline(time.Time{})
 
-	// dial upstream HTTP proxy
-	upstreamConn, err := net.Dial("tcp", config.Proxy.Address)
+	// dial upstream
+	upstreamConn, err := up.Connect(sni)
 	if err != nil {
-		slog.Error("failed to connect to upstream proxy", slog.Any("error", err))
+		slog.Error("failed to connect to upstream", slog.Any("error", err))
 		return
 	}
 	defer upstreamConn.Close()
-
-	// send CONNECT request to upstream proxy with Basic Auth
-	credentials := config.Proxy.Username + ":" + config.Proxy.Password
-	authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(credentials))
-
-	connectReq := &http.Request{
-		URL:    new(url.URL),
-		Method: http.MethodConnect,
-		Host:   net.JoinHostPort(sni, "443"),
-		Header: http.Header{
-			"Proxy-Authorization": []string{authHeader},
-		},
-	}
-
-	if err = connectReq.Write(upstreamConn); err != nil {
-		slog.Error("failed to write connect request to upstream proxy", slog.Any("error", err))
-		return
-	}
-
-	// read upstream proxy response
-	resp, err := http.ReadResponse(bufio.NewReader(upstreamConn), connectReq)
-	if err != nil {
-		slog.Error("failed to read response from upstream proxy", slog.Any("error", err))
-		return
-	}
-	if resp.StatusCode != http.StatusOK {
-		slog.Error("upstream proxy rejected connect request", slog.Int("code", resp.StatusCode))
-		return
-	}
 
 	var wg sync.WaitGroup
 	wg.Add(2)
