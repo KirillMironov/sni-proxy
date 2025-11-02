@@ -1,5 +1,10 @@
 module git.capy.fun/sni-proxy
 
-go 1.24.2
+go 1.25
 
-require github.com/kelseyhightower/envconfig v1.4.0
+require (
+	github.com/kelseyhightower/envconfig v1.4.0
+	golang.org/x/crypto v0.43.0
+)
+
+require golang.org/x/sys v0.37.0 // indirect

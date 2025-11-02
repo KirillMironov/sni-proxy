@@ -1,16 +1,19 @@
 package main
 
-import "net"
+import (
+	"net"
+	"time"
+)
 
 type UpstreamType string
 
 const (
 	UpstreamTypeHttpProxy UpstreamType = "http-proxy"
-	UpstreamTypeVLESS                  = "vless"
+	UpstreamTypeSSH       UpstreamType = "ssh"
 )
 
 type Upstream interface {
-	Connect(sni string) (net.Conn, error)
+	Connect(sni string, timeout time.Duration) (net.Conn, error)
 	Close() error
 }
 

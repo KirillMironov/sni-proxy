@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -18,8 +19,10 @@ type Config struct {
 	ListenAddress      string        `envconfig:"LISTEN_ADDRESS" default:":443"`
 	ClientHelloTimeout time.Duration `envconfig:"CLIENT_HELLO_TIMEOUT" default:"5s"`
 	Upstream           struct {
-		Type            UpstreamType `envconfig:"UPSTREAM_TYPE" default:"http-proxy"`
+		Type            UpstreamType  `envconfig:"UPSTREAM_TYPE"`
+		Timeout         time.Duration `envconfig:"UPSTREAM_TIMEOUT" default:"5s"`
 		HttpProxyConfig upstream.HttpProxyConfig
+		SSHConfig       upstream.SSHConfig
 	}
 }
 
@@ -47,6 +50,10 @@ func run() error {
 	switch config.Upstream.Type {
 	case UpstreamTypeHttpProxy:
 		up = upstream.NewHttpProxy(config.Upstream.HttpProxyConfig)
+	case UpstreamTypeSSH:
+		up = upstream.NewSSH(config.Upstream.SSHConfig)
+	case "":
+		return errors.New("upstream type not specified")
 	default:
 		return fmt.Errorf("unsupported upstream type: %s", config.Upstream.Type)
 	}
@@ -90,7 +97,7 @@ func handleConnection(conn net.Conn, up Upstream, config Config) {
 	_ = conn.SetReadDeadline(time.Time{})
 
 	// dial upstream
-	upstreamConn, err := up.Connect(sni)
+	upstreamConn, err := up.Connect(sni, config.Upstream.Timeout)
 	if err != nil {
 		slog.Error("failed to connect to upstream", slog.Any("error", err))
 		return
@@ -102,22 +109,12 @@ func handleConnection(conn net.Conn, up Upstream, config Config) {
 
 	go func() {
 		defer wg.Done()
-
 		_, _ = io.Copy(conn, upstreamConn)
-
-		if c := conn.(*net.TCPConn); c != nil {
-			_ = c.CloseWrite()
-		}
 	}()
 
 	go func() {
 		defer wg.Done()
-
 		_, _ = io.Copy(upstreamConn, reader)
-
-		if c := upstreamConn.(*net.TCPConn); c != nil {
-			_ = c.CloseWrite()
-		}
 	}()
 
 	wg.Wait()
