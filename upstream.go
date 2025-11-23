@@ -8,8 +8,9 @@ import (
 type UpstreamType string
 
 const (
-	UpstreamTypeHttpProxy UpstreamType = "http-proxy"
-	UpstreamTypeSSH       UpstreamType = "ssh"
+	UpstreamTypeHttpProxy    UpstreamType = "http-proxy"
+	UpstreamTypeSSH          UpstreamType = "ssh"
+	UpstreamTypeVLESSReality UpstreamType = "vless-reality"
 )
 
 type Upstream interface {

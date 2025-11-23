@@ -19,10 +19,11 @@ type Config struct {
 	ListenAddress      string        `envconfig:"LISTEN_ADDRESS" default:":443"`
 	ClientHelloTimeout time.Duration `envconfig:"CLIENT_HELLO_TIMEOUT" default:"5s"`
 	Upstream           struct {
-		Type            UpstreamType  `envconfig:"UPSTREAM_TYPE"`
-		Timeout         time.Duration `envconfig:"UPSTREAM_TIMEOUT" default:"5s"`
-		HttpProxyConfig upstream.HttpProxyConfig
-		SSHConfig       upstream.SSHConfig
+		Type               UpstreamType  `envconfig:"UPSTREAM_TYPE"`
+		Timeout            time.Duration `envconfig:"UPSTREAM_TIMEOUT" default:"5s"`
+		HttpProxyConfig    upstream.HttpProxyConfig
+		SSHConfig          upstream.SSHConfig
+		VLESSRealityConfig upstream.VLESSRealityConfig
 	}
 }
 
@@ -42,24 +43,21 @@ func run() error {
 		return err
 	}
 
-	var (
-		up  Upstream
-		err error
-	)
+	var up Upstream
 
 	switch config.Upstream.Type {
 	case UpstreamTypeHttpProxy:
 		up = upstream.NewHttpProxy(config.Upstream.HttpProxyConfig)
 	case UpstreamTypeSSH:
 		up = upstream.NewSSH(config.Upstream.SSHConfig)
+	case UpstreamTypeVLESSReality:
+		up = upstream.NewVlessReality(config.Upstream.VLESSRealityConfig)
 	case "":
 		return errors.New("upstream type not specified")
 	default:
 		return fmt.Errorf("unsupported upstream type: %s", config.Upstream.Type)
 	}
-	if err != nil {
-		return fmt.Errorf("failed to initialize upstream: %w", err)
-	}
+	defer up.Close()
 
 	ln, err := net.Listen("tcp", config.ListenAddress)
 	if err != nil {
@@ -105,18 +103,8 @@ func handleConnection(conn net.Conn, up Upstream, config Config) {
 	defer upstreamConn.Close()
 
 	var wg sync.WaitGroup
-	wg.Add(2)
-
-	go func() {
-		defer wg.Done()
-		_, _ = io.Copy(conn, upstreamConn)
-	}()
-
-	go func() {
-		defer wg.Done()
-		_, _ = io.Copy(upstreamConn, reader)
-	}()
-
+	wg.Go(func() { _, _ = io.Copy(conn, upstreamConn) })
+	wg.Go(func() { _, _ = io.Copy(upstreamConn, reader) })
 	wg.Wait()
 
 	slog.Info("client connection closed", slog.String("sni", sni))
