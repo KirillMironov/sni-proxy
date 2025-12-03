@@ -3,27 +3,24 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io"
 	"log/slog"
 	"net"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/kelseyhightower/envconfig"
 
-	"git.capy.fun/sni-proxy/upstream"
+	"git.capy.fun/sni-proxy/bypass"
+	"git.capy.fun/sni-proxy/proxy"
 )
 
 type Config struct {
-	ListenAddress      string        `envconfig:"LISTEN_ADDRESS" default:":443"`
-	ClientHelloTimeout time.Duration `envconfig:"CLIENT_HELLO_TIMEOUT" default:"5s"`
-	Upstream           struct {
-		Type               UpstreamType  `envconfig:"UPSTREAM_TYPE"`
-		Timeout            time.Duration `envconfig:"UPSTREAM_TIMEOUT" default:"5s"`
-		HttpProxyConfig    upstream.HttpProxyConfig
-		SSHConfig          upstream.SSHConfig
-		VLESSRealityConfig upstream.VLESSRealityConfig
+	Mode          Mode   `envconfig:"MODE" default:"proxy"`
+	ListenAddress string `envconfig:"LISTEN_ADDRESS" default:":443"`
+	ClientHello   struct {
+		Timeout    time.Duration `envconfig:"CLIENT_HELLO_TIMEOUT" default:"5s"`
+		BufferSize uint          `envconfig:"CLIENT_HELLO_BUFFER_SIZE" default:"4096"`
+		ChunkSize  uint          `envconfig:"CLIENT_HELLO_CHUNK_SIZE" default:"1"`
 	}
 }
 
@@ -43,21 +40,22 @@ func run() error {
 		return err
 	}
 
-	var up Upstream
+	var connectionHandler ConnectionHandler
 
-	switch config.Upstream.Type {
-	case UpstreamTypeHttpProxy:
-		up = upstream.NewHttpProxy(config.Upstream.HttpProxyConfig)
-	case UpstreamTypeSSH:
-		up = upstream.NewSSH(config.Upstream.SSHConfig)
-	case UpstreamTypeVLESSReality:
-		up = upstream.NewVlessReality(config.Upstream.VLESSRealityConfig)
+	switch config.Mode {
+	case ModeProxy:
+		connectionHandler = proxy.NewHandler(config.ClientHello.Timeout)
+	case ModeBypass:
+		connectionHandler = bypass.NewHandler(config.ClientHello.Timeout, config.ClientHello.BufferSize, config.ClientHello.ChunkSize)
 	case "":
-		return errors.New("upstream type not specified")
+		return errors.New("mode not specified")
 	default:
-		return fmt.Errorf("unsupported upstream type: %s", config.Upstream.Type)
+		return fmt.Errorf("unsupported mode: %s", config.Mode)
 	}
-	defer up.Close()
+
+	if err := connectionHandler.Init(); err != nil {
+		return fmt.Errorf("failed to initialize connection handler: %w", err)
+	}
 
 	ln, err := net.Listen("tcp", config.ListenAddress)
 	if err != nil {
@@ -72,15 +70,15 @@ func run() error {
 			continue
 		}
 
-		go handleConnection(conn, up, config)
+		go handleConnection(conn, connectionHandler, config.ClientHello.Timeout)
 	}
 }
 
-func handleConnection(conn net.Conn, up Upstream, config Config) {
+func handleConnection(conn net.Conn, connectionHandler ConnectionHandler, clientHelloTimeout time.Duration) {
 	defer conn.Close()
 
 	// set a read deadline for ClientHello peek
-	if err := conn.SetReadDeadline(time.Now().Add(config.ClientHelloTimeout)); err != nil {
+	if err := conn.SetReadDeadline(time.Now().Add(clientHelloTimeout)); err != nil {
 		return
 	}
 
@@ -94,18 +92,7 @@ func handleConnection(conn net.Conn, up Upstream, config Config) {
 	// reset deadline to no deadline
 	_ = conn.SetReadDeadline(time.Time{})
 
-	// dial upstream
-	upstreamConn, err := up.Connect(sni, config.Upstream.Timeout)
-	if err != nil {
-		slog.Error("failed to connect to upstream", slog.Any("error", err))
-		return
-	}
-	defer upstreamConn.Close()
-
-	var wg sync.WaitGroup
-	wg.Go(func() { _, _ = io.Copy(conn, upstreamConn) })
-	wg.Go(func() { _, _ = io.Copy(upstreamConn, reader) })
-	wg.Wait()
+	connectionHandler.Handle(conn, sni, reader)
 
 	slog.Info("client connection closed", slog.String("sni", sni))
 }
