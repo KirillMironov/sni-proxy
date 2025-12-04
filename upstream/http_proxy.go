@@ -8,19 +8,15 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+
+	"git.capy.fun/sni-proxy/config"
 )
 
-type HttpProxyConfig struct {
-	Address  string `envconfig:"HTTP_PROXY_ADDRESS"`
-	Username string `envconfig:"HTTP_PROXY_USERNAME"`
-	Password string `envconfig:"HTTP_PROXY_PASSWORD"`
-}
-
 type HttpProxy struct {
-	config HttpProxyConfig
+	config config.HttpProxyConfig
 }
 
-func NewHttpProxy(config HttpProxyConfig) *HttpProxy {
+func NewHttpProxy(config config.HttpProxyConfig) *HttpProxy {
 	return &HttpProxy{config: config}
 }
 

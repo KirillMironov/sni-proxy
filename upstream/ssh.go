@@ -7,19 +7,15 @@ import (
 	"time"
 
 	"golang.org/x/crypto/ssh"
+
+	"git.capy.fun/sni-proxy/config"
 )
 
-type SSHConfig struct {
-	Address    string `envconfig:"SSH_ADDRESS"`
-	User       string `envconfig:"SSH_USER"`
-	PrivateKey string `envconfig:"SSH_PRIVATE_KEY"`
-}
-
 type SSH struct {
-	config SSHConfig
+	config config.SSHConfig
 }
 
-func NewSSH(config SSHConfig) *SSH {
+func NewSSH(config config.SSHConfig) *SSH {
 	return &SSH{config: config}
 }
 

@@ -7,23 +7,19 @@ import (
 	"net"
 	"sync"
 	"time"
+
+	"git.capy.fun/sni-proxy/config"
 )
 
 type Handler struct {
-	clientHelloTimeout    time.Duration
-	clientHelloBufferSize uint
-	clientHelloChunkSize  uint
+	config config.BypassConfig
 
 	// custom resolver to avoid dns loops
 	resolver *net.Resolver
 }
 
-func NewHandler(clientHelloTimeout time.Duration, clientHelloBufferSize, clientHelloChunkSize uint) *Handler {
-	return &Handler{
-		clientHelloTimeout:    clientHelloTimeout,
-		clientHelloBufferSize: clientHelloBufferSize,
-		clientHelloChunkSize:  clientHelloChunkSize,
-	}
+func NewHandler(config config.BypassConfig) *Handler {
+	return &Handler{config: config}
 }
 
 func (h *Handler) Init() error {
@@ -50,12 +46,12 @@ func (h *Handler) Handle(conn net.Conn, sni string, reader io.Reader) {
 	// dial upstream
 	targetConn, err := net.DialTimeout("tcp", target, 5*time.Second)
 	if err != nil {
-		slog.Error("Dial failed", slog.Any("err", err))
+		slog.Error("dial failed", slog.Any("error", err))
 		return
 	}
 	defer targetConn.Close()
 
-	clientHelloBuf := make([]byte, h.clientHelloBufferSize)
+	clientHelloBuf := make([]byte, h.config.ClientHello.BufferSize)
 	n, err := reader.Read(clientHelloBuf)
 	if err != nil {
 		return
@@ -63,8 +59,8 @@ func (h *Handler) Handle(conn net.Conn, sni string, reader io.Reader) {
 	clientHelloData := clientHelloBuf[:n]
 
 	// write ClientHello packets in chunks
-	for i := 0; i < len(clientHelloData); i += int(h.clientHelloChunkSize) {
-		end := i + int(h.clientHelloChunkSize)
+	for i := 0; i < len(clientHelloData); i += int(h.config.ClientHello.ChunkSize) {
+		end := i + int(h.config.ClientHello.ChunkSize)
 		if end > len(clientHelloData) {
 			end = len(clientHelloData)
 		}

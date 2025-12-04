@@ -14,22 +14,15 @@ import (
 	xnet "github.com/xtls/xray-core/common/net"
 	"github.com/xtls/xray-core/common/uuid"
 	"github.com/xtls/xray-core/transport/internet/reality"
+
+	"git.capy.fun/sni-proxy/config"
 )
 
-type VLESSRealityConfig struct {
-	Address     string `envconfig:"VLESS_REALITY_ADDRESS"`
-	UUID        string `envconfig:"VLESS_REALITY_UUID"`
-	ShortID     string `envconfig:"VLESS_REALITY_SHORTID"`
-	PublicKey   string `envconfig:"VLESS_REALITY_PUBLIC_KEY"`
-	ServerName  string `envconfig:"VLESS_REALITY_SERVER_NAME"`
-	Fingerprint string `envconfig:"VLESS_REALITY_FINGERPRINT"`
-}
-
 type VLESSReality struct {
-	config VLESSRealityConfig
+	config config.VLESSRealityConfig
 }
 
-func NewVlessReality(config VLESSRealityConfig) *VLESSReality {
+func NewVlessReality(config config.VLESSRealityConfig) *VLESSReality {
 	return &VLESSReality{config: config}
 }
 
