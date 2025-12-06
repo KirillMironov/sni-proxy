@@ -1,4 +1,4 @@
-package bypass
+package handler
 
 import (
 	"context"
@@ -11,19 +11,19 @@ import (
 	"git.capy.fun/sni-proxy/config"
 )
 
-type Handler struct {
+type Bypass struct {
 	config config.BypassConfig
 
 	// custom resolver to avoid dns loops
 	resolver *net.Resolver
 }
 
-func NewHandler(config config.BypassConfig) *Handler {
-	return &Handler{config: config}
+func NewBypass(config config.BypassConfig) *Bypass {
+	return &Bypass{config: config}
 }
 
-func (h *Handler) Init() error {
-	h.resolver = &net.Resolver{
+func (b *Bypass) Init() error {
+	b.resolver = &net.Resolver{
 		PreferGo: true,
 		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
 			d := net.Dialer{Timeout: 5 * time.Second}
@@ -34,9 +34,9 @@ func (h *Handler) Init() error {
 	return nil
 }
 
-func (h *Handler) Handle(conn net.Conn, sni string, reader io.Reader) {
+func (b *Bypass) Handle(conn net.Conn, sni string, reader io.Reader) {
 	// resolve upstream
-	ips, err := h.resolver.LookupHost(context.Background(), sni)
+	ips, err := b.resolver.LookupHost(context.Background(), sni)
 	if err != nil || len(ips) == 0 {
 		slog.Error("dns lookup failed", slog.String("sni", sni), slog.Any("error", err))
 		return
@@ -51,7 +51,7 @@ func (h *Handler) Handle(conn net.Conn, sni string, reader io.Reader) {
 	}
 	defer targetConn.Close()
 
-	clientHelloBuf := make([]byte, h.config.ClientHello.BufferSize)
+	clientHelloBuf := make([]byte, b.config.ClientHello.BufferSize)
 	n, err := reader.Read(clientHelloBuf)
 	if err != nil {
 		return
@@ -59,8 +59,8 @@ func (h *Handler) Handle(conn net.Conn, sni string, reader io.Reader) {
 	clientHelloData := clientHelloBuf[:n]
 
 	// write ClientHello packets in chunks
-	for i := 0; i < len(clientHelloData); i += int(h.config.ClientHello.ChunkSize) {
-		end := i + int(h.config.ClientHello.ChunkSize)
+	for i := 0; i < len(clientHelloData); i += int(b.config.ClientHello.ChunkSize) {
+		end := i + int(b.config.ClientHello.ChunkSize)
 		if end > len(clientHelloData) {
 			end = len(clientHelloData)
 		}

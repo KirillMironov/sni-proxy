@@ -1,4 +1,4 @@
-package proxy
+package handler
 
 import (
 	"errors"
@@ -13,7 +13,7 @@ import (
 	"git.capy.fun/sni-proxy/upstream"
 )
 
-type Handler struct {
+type Proxy struct {
 	config   config.ProxyConfig
 	upstream Upstream
 }
@@ -23,34 +23,34 @@ type Upstream interface {
 	Close() error
 }
 
-func NewHandler(config config.ProxyConfig) *Handler {
-	return &Handler{config: config}
+func NewProxy(config config.ProxyConfig) *Proxy {
+	return &Proxy{config: config}
 }
 
-func (h *Handler) Init() error {
+func (p *Proxy) Init() error {
 	var up Upstream
 
-	switch h.config.UpstreamType {
+	switch p.config.UpstreamType {
 	case config.UpstreamTypeHttpProxy:
-		up = upstream.NewHttpProxy(h.config.HttpProxyConfig)
+		up = upstream.NewHttpProxy(p.config.HttpProxyConfig)
 	case config.UpstreamTypeSSH:
-		up = upstream.NewSSH(h.config.SSHConfig)
+		up = upstream.NewSSH(p.config.SSHConfig)
 	case config.UpstreamTypeVLESSReality:
-		up = upstream.NewVlessReality(h.config.VLESSRealityConfig)
+		up = upstream.NewVlessReality(p.config.VLESSRealityConfig)
 	case "":
 		return errors.New("upstream type not specified")
 	default:
-		return fmt.Errorf("unsupported upstream type: %s", h.config.UpstreamType)
+		return fmt.Errorf("unsupported upstream type: %s", p.config.UpstreamType)
 	}
 
-	h.upstream = up
+	p.upstream = up
 
 	return nil
 }
 
-func (h *Handler) Handle(conn net.Conn, sni string, reader io.Reader) {
+func (p *Proxy) Handle(conn net.Conn, sni string, reader io.Reader) {
 	// dial upstream
-	upstreamConn, err := h.upstream.Connect(sni, h.config.UpstreamTimeout)
+	upstreamConn, err := p.upstream.Connect(sni, p.config.UpstreamTimeout)
 	if err != nil {
 		slog.Error("failed to connect to upstream", slog.Any("error", err))
 		return

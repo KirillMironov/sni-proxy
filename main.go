@@ -11,9 +11,8 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 
-	"git.capy.fun/sni-proxy/bypass"
 	"git.capy.fun/sni-proxy/config"
-	"git.capy.fun/sni-proxy/proxy"
+	"git.capy.fun/sni-proxy/handler"
 )
 
 type ConnectionHandler interface {
@@ -22,7 +21,7 @@ type ConnectionHandler interface {
 }
 
 func main() {
-	logger := slog.New(newHandler(os.Stdout, slog.LevelInfo))
+	logger := slog.New(newSlogHandler(os.Stdout, slog.LevelInfo))
 	slog.SetDefault(logger)
 
 	if err := run(); err != nil {
@@ -41,9 +40,9 @@ func run() error {
 
 	switch cfg.Mode {
 	case config.ModeProxy:
-		connectionHandler = proxy.NewHandler(cfg.ProxyConfig)
+		connectionHandler = handler.NewProxy(cfg.ProxyConfig)
 	case config.ModeBypass:
-		connectionHandler = bypass.NewHandler(cfg.BypassConfig)
+		connectionHandler = handler.NewBypass(cfg.BypassConfig)
 	case "":
 		return errors.New("mode not specified")
 	default:

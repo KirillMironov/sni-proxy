@@ -8,25 +8,25 @@ import (
 	"strings"
 )
 
-var _ slog.Handler = (*handler)(nil)
+var _ slog.Handler = (*slogHandler)(nil)
 
-type handler struct {
+type slogHandler struct {
 	out   io.Writer
 	level slog.Level
 }
 
-func newHandler(out io.Writer, level slog.Level) *handler {
-	return &handler{
+func newSlogHandler(out io.Writer, level slog.Level) *slogHandler {
+	return &slogHandler{
 		level: level,
 		out:   out,
 	}
 }
 
-func (h *handler) Enabled(_ context.Context, level slog.Level) bool {
+func (h *slogHandler) Enabled(_ context.Context, level slog.Level) bool {
 	return level >= h.level
 }
 
-func (h *handler) Handle(_ context.Context, record slog.Record) error {
+func (h *slogHandler) Handle(_ context.Context, record slog.Record) error {
 	level := strings.ToUpper(record.Level.String())
 	level += strings.Repeat(" ", 5-len(level))
 
@@ -49,10 +49,10 @@ func (h *handler) Handle(_ context.Context, record slog.Record) error {
 	return err
 }
 
-func (h *handler) WithAttrs(_ []slog.Attr) slog.Handler {
+func (h *slogHandler) WithAttrs(_ []slog.Attr) slog.Handler {
 	return h
 }
 
-func (h *handler) WithGroup(_ string) slog.Handler {
+func (h *slogHandler) WithGroup(_ string) slog.Handler {
 	return h
 }
