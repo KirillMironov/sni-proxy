@@ -10,6 +10,9 @@ github.com/cloudflare/circl/sign/internal/dilithium/params
 github.com/cloudflare/circl/sign/mldsa/mldsa65
 github.com/cloudflare/circl/sign/mldsa/mldsa65/internal
 github.com/cloudflare/circl/simd/keccakf1600
+# github.com/google/uuid v1.6.0
+## explicit
+github.com/google/uuid
 # github.com/juju/ratelimit v1.0.2
 ## explicit
 github.com/juju/ratelimit

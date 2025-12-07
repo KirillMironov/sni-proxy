@@ -27,11 +27,12 @@ SNI Proxy is configured via environment variables.
 
 These variables apply to both operation modes.
 
-| Environment Variable   | Description                                                     | Default  | Required |
-|------------------------|-----------------------------------------------------------------|:--------:|:--------:|
-| `MODE`                 | Operation mode: `proxy` or `bypass`                             | `proxy`  |    No    |
-| `LISTEN_ADDRESS`       | Address on which the SNI proxy listens                          |  `:443`  |    No    |
-| `CLIENT_HELLO_TIMEOUT` | Read timeout for the initial ClientHello message                |   `5s`   |    No    |
+| Environment Variable   | Description                                      | Default | Required |
+|------------------------|--------------------------------------------------|:-------:|:--------:|
+| `MODE`                 | Operation mode: `proxy` or `bypass`              | `proxy` |    No    |
+| `LISTEN_ADDRESS`       | Address on which the SNI proxy listens           | `:443`  |    No    |
+| `CLIENT_HELLO_TIMEOUT` | Read timeout for the initial ClientHello message |  `5s`   |    No    |
+| `LOG_LEVEL`            | Logging level: `debug`, `info` or `error`        | `info`  |    No    |
 
 ---
 

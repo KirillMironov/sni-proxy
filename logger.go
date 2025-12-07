@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"log/slog"
+	"os"
 	"strings"
 )
 
@@ -26,7 +28,11 @@ func (h *slogHandler) Enabled(_ context.Context, level slog.Level) bool {
 	return level >= h.level
 }
 
-func (h *slogHandler) Handle(_ context.Context, record slog.Record) error {
+func (h *slogHandler) Handle(ctx context.Context, record slog.Record) error {
+	if connID, ok := ctx.Value(connIDKey).(string); ok {
+		record.Add(slog.String(string(connIDKey), connID))
+	}
+
 	level := strings.ToUpper(record.Level.String())
 	level += strings.Repeat(" ", 5-len(level))
 
@@ -39,13 +45,11 @@ func (h *slogHandler) Handle(_ context.Context, record slog.Record) error {
 		return true
 	})
 
-	line := fmt.Sprintf("%s %s %s", level, timestamp, record.Message)
-	if len(fields) > 0 {
-		line += "\t" + strings.Join(fields, " ")
-	}
-	line += "\n"
+	var buf bytes.Buffer
 
-	_, err := h.out.Write([]byte(line))
+	_, _ = fmt.Fprintf(&buf, "%s %s %s %s\n", level, timestamp, record.Message, strings.Join(fields, " "))
+
+	_, err := h.out.Write(buf.Bytes())
 	return err
 }
 
@@ -55,4 +59,23 @@ func (h *slogHandler) WithAttrs(_ []slog.Attr) slog.Handler {
 
 func (h *slogHandler) WithGroup(_ string) slog.Handler {
 	return h
+}
+
+type contextKey string
+
+const connIDKey contextKey = "conn_id"
+
+func setupLogger(levelStr string) {
+	var level slog.Level
+	switch levelStr {
+	case "debug":
+		level = slog.LevelDebug
+	case "error":
+		level = slog.LevelError
+	default:
+		level = slog.LevelInfo
+	}
+
+	handler := newSlogHandler(os.Stdout, level)
+	slog.SetDefault(slog.New(handler))
 }

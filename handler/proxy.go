@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -48,11 +49,11 @@ func (p *Proxy) Init() error {
 	return nil
 }
 
-func (p *Proxy) Handle(conn net.Conn, sni string, reader io.Reader) {
+func (p *Proxy) Handle(ctx context.Context, conn net.Conn, sni string, reader io.Reader) {
 	// dial upstream
 	upstreamConn, err := p.upstream.Connect(sni, p.config.UpstreamTimeout)
 	if err != nil {
-		slog.Error("failed to connect to upstream", slog.Any("error", err))
+		slog.ErrorContext(ctx, "failed to connect to upstream", slog.Any("error", err))
 		return
 	}
 	defer upstreamConn.Close()

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/kelseyhightower/envconfig"
 
 	"git.capy.fun/sni-proxy/config"
@@ -17,13 +19,10 @@ import (
 
 type ConnectionHandler interface {
 	Init() error
-	Handle(conn net.Conn, sni string, reader io.Reader)
+	Handle(ctx context.Context, conn net.Conn, sni string, reader io.Reader)
 }
 
 func main() {
-	logger := slog.New(newSlogHandler(os.Stdout, slog.LevelInfo))
-	slog.SetDefault(logger)
-
 	if err := run(); err != nil {
 		slog.Error("failed to run", slog.Any("error", err))
 		os.Exit(1)
@@ -35,6 +34,8 @@ func run() error {
 	if err := envconfig.Process("", &cfg); err != nil {
 		return err
 	}
+
+	setupLogger(cfg.LogLevel)
 
 	var connectionHandler ConnectionHandler
 
@@ -73,6 +74,8 @@ func run() error {
 func handleConnection(conn net.Conn, connectionHandler ConnectionHandler, clientHelloTimeout time.Duration) {
 	defer conn.Close()
 
+	ctx := context.WithValue(context.Background(), connIDKey, uuid.NewString())
+
 	// set a read deadline for ClientHello peek
 	if err := conn.SetReadDeadline(time.Now().Add(clientHelloTimeout)); err != nil {
 		return
@@ -80,15 +83,15 @@ func handleConnection(conn net.Conn, connectionHandler ConnectionHandler, client
 
 	sni, reader, err := sniFromConn(conn)
 	if err != nil {
-		slog.Error("failed to get sni from connection", slog.Any("error", err))
+		slog.ErrorContext(ctx, "failed to get sni from connection", slog.Any("error", err))
 		return
 	}
-	slog.Info("new client", slog.String("sni", sni))
+	slog.DebugContext(ctx, "new client connection", slog.String("sni", sni))
 
 	// reset deadline to no deadline
 	_ = conn.SetReadDeadline(time.Time{})
 
-	connectionHandler.Handle(conn, sni, reader)
+	connectionHandler.Handle(ctx, conn, sni, reader)
 
-	slog.Info("client connection closed", slog.String("sni", sni))
+	slog.DebugContext(ctx, "client connection closed", slog.String("sni", sni))
 }

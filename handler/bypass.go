@@ -34,11 +34,11 @@ func (b *Bypass) Init() error {
 	return nil
 }
 
-func (b *Bypass) Handle(conn net.Conn, sni string, reader io.Reader) {
+func (b *Bypass) Handle(ctx context.Context, conn net.Conn, sni string, reader io.Reader) {
 	// resolve upstream
 	ips, err := b.resolver.LookupHost(context.Background(), sni)
 	if err != nil || len(ips) == 0 {
-		slog.Error("dns lookup failed", slog.String("sni", sni), slog.Any("error", err))
+		slog.ErrorContext(ctx, "dns lookup failed", slog.String("sni", sni), slog.Any("error", err))
 		return
 	}
 	target := net.JoinHostPort(ips[0], "443")
@@ -46,7 +46,7 @@ func (b *Bypass) Handle(conn net.Conn, sni string, reader io.Reader) {
 	// dial upstream
 	targetConn, err := net.DialTimeout("tcp", target, 5*time.Second)
 	if err != nil {
-		slog.Error("dial failed", slog.Any("error", err))
+		slog.ErrorContext(ctx, "dial failed", slog.Any("error", err))
 		return
 	}
 	defer targetConn.Close()
@@ -69,7 +69,7 @@ func (b *Bypass) Handle(conn net.Conn, sni string, reader io.Reader) {
 
 		_, err = targetConn.Write(chunk)
 		if err != nil {
-			slog.Error("failed to write chunk", slog.Any("error", err))
+			slog.ErrorContext(ctx, "failed to write chunk", slog.Any("error", err))
 			return
 		}
 	}

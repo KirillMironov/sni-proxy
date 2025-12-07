@@ -6,6 +6,7 @@ type Config struct {
 	Mode               Mode          `envconfig:"MODE" default:"proxy"`
 	ListenAddress      string        `envconfig:"LISTEN_ADDRESS" default:":443"`
 	ClientHelloTimeout time.Duration `envconfig:"CLIENT_HELLO_TIMEOUT" default:"5s"`
+	LogLevel           string        `envconfig:"LOG_LEVEL" default:"info"`
 	ProxyConfig        ProxyConfig
 	BypassConfig       BypassConfig
 }
