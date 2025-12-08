@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"crypto/tls"
 	"io"
 	"log/slog"
 	"net"
@@ -26,8 +27,15 @@ func (b *Bypass) Init() error {
 	b.resolver = &net.Resolver{
 		PreferGo: true,
 		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-			d := net.Dialer{Timeout: 5 * time.Second}
-			return d.DialContext(ctx, "udp", "1.1.1.1:53")
+			d := &net.Dialer{
+				Timeout: 5 * time.Second,
+			}
+
+			tlsConfig := &tls.Config{
+				ServerName: "cloudflare-dns.com",
+			}
+
+			return tls.DialWithDialer(d, "tcp", "1.1.1.1:853", tlsConfig)
 		},
 	}
 
