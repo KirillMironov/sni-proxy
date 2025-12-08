@@ -80,6 +80,8 @@ func (b *Bypass) Handle(ctx context.Context, conn net.Conn, sni string, reader i
 			slog.ErrorContext(ctx, "failed to write chunk", slog.Any("error", err))
 			return
 		}
+
+		time.Sleep(b.config.ClientHello.ChunkDelay)
 	}
 
 	var wg sync.WaitGroup

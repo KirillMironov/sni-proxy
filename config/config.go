@@ -21,8 +21,9 @@ type ProxyConfig struct {
 
 type BypassConfig struct {
 	ClientHello struct {
-		BufferSize uint `envconfig:"CLIENT_HELLO_BUFFER_SIZE" default:"4096"`
-		ChunkSize  uint `envconfig:"CLIENT_HELLO_CHUNK_SIZE" default:"1"`
+		BufferSize uint          `envconfig:"CLIENT_HELLO_BUFFER_SIZE" default:"4096"`
+		ChunkSize  uint          `envconfig:"CLIENT_HELLO_CHUNK_SIZE" default:"1"`
+		ChunkDelay time.Duration `envconfig:"CLIENT_HELLO_CHUNK_DELAY"`
 	}
 }
 

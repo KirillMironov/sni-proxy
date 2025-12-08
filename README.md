@@ -44,6 +44,7 @@ These variables apply to both operation modes.
 |----------------------------|-------------------------------------------------------------------------------|:-------:|:--------:|
 | `CLIENT_HELLO_BUFFER_SIZE` | Buffer size for reading the initial handshake                                 | `4096`  |    No    |
 | `CLIENT_HELLO_CHUNK_SIZE`  | The size (in bytes) of the chunks into which the ClientHello message is split |   `1`   |    No    |
+| `CLIENT_HELLO_CHUNK_DELAY` | Time to wait between chunks to prevent packet merging (e.g., `20us`)          |    -    |    No    |
 
 ---
 
