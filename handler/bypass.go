@@ -82,51 +82,40 @@ func (b *Bypass) Handle(ctx context.Context, conn net.Conn, sni string, reader i
 }
 
 func (b *Bypass) splitClientHello(clientHelloData []byte, targetConn net.Conn) error {
-	isTLS := len(clientHelloData) > 5 && clientHelloData[0] == 0x16
-	chunkSize := int(b.config.ClientHello.ChunkSize)
+	if len(clientHelloData) < 10 || clientHelloData[0] != 0x16 {
+		_, err := targetConn.Write(clientHelloData)
+		return err
+	}
 
-	// split only if we have enough data
-	if isTLS && chunkSize > 0 && len(clientHelloData) > 5+chunkSize {
-		// parse the total length of the TLS payload from the header
-		totalLen := int(clientHelloData[3])<<8 | int(clientHelloData[4])
+	totalLen := int(clientHelloData[3])<<8 | int(clientHelloData[4])
+	if len(clientHelloData) < 5+totalLen {
+		_, err := targetConn.Write(clientHelloData)
+		return err
+	}
 
-		// ensure we actually read the full record
-		if len(clientHelloData) >= 5+totalLen {
-			// the first chunk
-			// [16] [VerMajor] [VerMinor] [LenHigh] [LenLow]
-			header1 := []byte{
-				0x16,
-				clientHelloData[1],
-				clientHelloData[2],
-				byte(chunkSize >> 8),
-				byte(chunkSize),
-			}
-			if _, err := targetConn.Write(header1); err != nil {
-				return err
-			}
-			if _, err := targetConn.Write(clientHelloData[5 : 5+chunkSize]); err != nil {
-				return err
-			}
+	// split strictly at the first byte of the payload
+	splitPos := 1
 
-			// the rest
-			remaining := totalLen - chunkSize
-			header2 := []byte{
-				0x16,
-				clientHelloData[1],
-				clientHelloData[2],
-				byte(remaining >> 8),
-				byte(remaining),
-			}
-			if _, err := targetConn.Write(header2); err != nil {
-				return err
-			}
-			if _, err := targetConn.Write(clientHelloData[5+chunkSize : 5+totalLen]); err != nil {
-				return err
-			}
-		} else {
-			_, err := targetConn.Write(clientHelloData)
-			return err
-		}
+	header1 := []byte{
+		0x16, clientHelloData[1], clientHelloData[2], 0x00, byte(splitPos),
+	}
+	if _, err := targetConn.Write(header1); err != nil {
+		return err
+	}
+	if _, err := targetConn.Write(clientHelloData[5 : 5+splitPos]); err != nil {
+		return err
+	}
+
+	remaining := totalLen - splitPos
+
+	header2 := []byte{
+		0x16, clientHelloData[1], clientHelloData[2], byte(remaining >> 8), byte(remaining),
+	}
+	if _, err := targetConn.Write(header2); err != nil {
+		return err
+	}
+	if _, err := targetConn.Write(clientHelloData[5+splitPos : 5+totalLen]); err != nil {
+		return err
 	}
 
 	return nil
