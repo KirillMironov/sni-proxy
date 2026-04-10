@@ -32,7 +32,7 @@ func (v *VLESSReality) Connect(sni string, timeout time.Duration) (net.Conn, err
 		return nil, fmt.Errorf("failed to dial tcp: %w", err)
 	}
 
-	realityConn, err := v.realityHandshake(conn)
+	realityConn, err := v.realityHandshake(conn, timeout)
 	if err != nil {
 		conn.Close()
 		return nil, fmt.Errorf("reality handshake failed: %w", err)
@@ -57,7 +57,7 @@ func (v *VLESSReality) Connect(sni string, timeout time.Duration) (net.Conn, err
 	return &VLESSConn{Conn: realityConn}, nil
 }
 
-func (v *VLESSReality) realityHandshake(conn net.Conn) (net.Conn, error) {
+func (v *VLESSReality) realityHandshake(conn net.Conn, timeout time.Duration) (net.Conn, error) {
 	shortID, err := hex.DecodeString(v.config.ShortID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode short id: %w", err)
@@ -85,7 +85,10 @@ func (v *VLESSReality) realityHandshake(conn net.Conn) (net.Conn, error) {
 		return nil, fmt.Errorf("failed to parse destination: %w", err)
 	}
 
-	return reality.UClient(conn, cfg, context.Background(), dest)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	return reality.UClient(conn, cfg, ctx, dest)
 }
 
 func (v *VLESSReality) writeVlessRequest(conn io.Writer, sni string) error {
