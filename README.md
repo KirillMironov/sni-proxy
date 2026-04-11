@@ -50,10 +50,10 @@ These variables apply to both operation modes.
 
 **When `MODE` is set to `proxy`**
 
-| Environment Variable | Description                                           | Default | Required |
-|----------------------|-------------------------------------------------------|:-------:|:--------:|
-| `UPSTREAM_TYPE`      | Upstream type: `http-proxy`, `ssh` or `vless-reality` |    -    |   Yes    |
-| `UPSTREAM_TIMEOUT`   | Timeout for upstream to complete the connection       |  `5s`   |    No    |
+| Environment Variable | Description                                                        | Default | Required |
+|----------------------|--------------------------------------------------------------------|:-------:|:--------:|
+| `UPSTREAM_TYPE`      | Upstream type: `http-proxy`, `ssh`, `vless-reality` or `wireguard` |    -    |   Yes    |
+| `UPSTREAM_TIMEOUT`   | Timeout for upstream to complete the connection                    |  `5s`   |    No    |
 
 
 **HTTP Proxy Upstream** (`UPSTREAM_TYPE=http-proxy`)
@@ -82,3 +82,16 @@ These variables apply to both operation modes.
 | `VLESS_REALITY_PUBLIC_KEY`  | The X25519 public key of the Reality server                         |    -     |   Yes    |
 | `VLESS_REALITY_SERVER_NAME` | The SNI used to mask traffic (e.g., `example.com`)                  |    -     |   Yes    |
 | `VLESS_REALITY_FINGERPRINT` | The uTLS client fingerprint to simulate (e.g., `chrome`, `firefox`) | `chrome` |    No    |
+
+**WireGuard Upstream** (`UPSTREAM_TYPE=wireguard`)
+
+| Environment Variable           | Description                                    |  Default  | Required |
+|--------------------------------|------------------------------------------------|:---------:|:--------:|
+| `WIREGUARD_ENDPOINT`           | Server address (e.g., `1.2.3.4:51820`)         |     -     |   Yes    |
+| `WIREGUARD_PRIVATE_KEY`        | Private key (base64)                           |     -     |   Yes    |
+| `WIREGUARD_PUBLIC_KEY`         | Public key (base64)                            |     -     |   Yes    |
+| `WIREGUARD_PRESHARED_KEY`      | Optional pre-shared key (base64)               |     -     |    No    |
+| `WIREGUARD_TUNNEL_IP`          | Client IP inside the tunnel (e.g., `10.8.0.2`) |     -     |   Yes    |
+| `WIREGUARD_DNS`                | DNS server                                     | `1.1.1.1` |    No    |
+| `WIREGUARD_MTU`                | MTU                                            |  `1420`   |    No    |
+| `WIREGUARD_KEEPALIVE_INTERVAL` | Keepalive interval in seconds                  |   `25`    |    No    |
