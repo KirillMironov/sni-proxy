@@ -13,4 +13,5 @@ const (
 	UpstreamTypeHttpProxy    UpstreamType = "http-proxy"
 	UpstreamTypeSSH          UpstreamType = "ssh"
 	UpstreamTypeVLESSReality UpstreamType = "vless-reality"
+	UpstreamTypeWireguard    UpstreamType = "wireguard"
 )

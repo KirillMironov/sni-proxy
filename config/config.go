@@ -17,6 +17,7 @@ type ProxyConfig struct {
 	HttpProxyConfig    HttpProxyConfig
 	SSHConfig          SSHConfig
 	VLESSRealityConfig VLESSRealityConfig
+	WireguardConfig    WireguardConfig
 }
 
 type BypassConfig struct {
@@ -45,5 +46,16 @@ type (
 		PublicKey   string `envconfig:"VLESS_REALITY_PUBLIC_KEY"`
 		ServerName  string `envconfig:"VLESS_REALITY_SERVER_NAME"`
 		Fingerprint string `envconfig:"VLESS_REALITY_FINGERPRINT"`
+	}
+
+	WireguardConfig struct {
+		Endpoint          string `envconfig:"WIREGUARD_ENDPOINT"`
+		PrivateKey        string `envconfig:"WIREGUARD_PRIVATE_KEY"`
+		PublicKey         string `envconfig:"WIREGUARD_PUBLIC_KEY"`
+		PresharedKey      string `envconfig:"WIREGUARD_PRESHARED_KEY"`
+		TunnelIP          string `envconfig:"WIREGUARD_TUNNEL_IP"`
+		DNS               string `envconfig:"WIREGUARD_DNS"`
+		MTU               int    `envconfig:"WIREGUARD_MTU"`
+		KeepaliveInterval int    `envconfig:"WIREGUARD_KEEPALIVE_INTERVAL"`
 	}
 )

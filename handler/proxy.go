@@ -38,6 +38,8 @@ func (p *Proxy) Init() error {
 		up = upstream.NewSSH(p.config.SSHConfig)
 	case config.UpstreamTypeVLESSReality:
 		up = upstream.NewVlessReality(p.config.VLESSRealityConfig)
+	case config.UpstreamTypeWireguard:
+		up = upstream.NewWireguard(p.config.WireguardConfig)
 	case "":
 		return errors.New("upstream type not specified")
 	default:
