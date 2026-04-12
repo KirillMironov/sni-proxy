@@ -26,6 +26,10 @@ func NewVlessReality(config config.VLESSRealityConfig) *VLESSReality {
 	return &VLESSReality{config: config}
 }
 
+func (*VLESSReality) Init() error {
+	return nil
+}
+
 func (v *VLESSReality) Connect(sni string, timeout time.Duration) (net.Conn, error) {
 	conn, err := net.DialTimeout("tcp", v.config.Address, timeout)
 	if err != nil {

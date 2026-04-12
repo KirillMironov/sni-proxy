@@ -19,6 +19,10 @@ func NewSSH(config config.SSHConfig) *SSH {
 	return &SSH{config: config}
 }
 
+func (*SSH) Init() error {
+	return nil
+}
+
 func (s *SSH) Connect(sni string, timeout time.Duration) (net.Conn, error) {
 	var authMethods []ssh.AuthMethod
 

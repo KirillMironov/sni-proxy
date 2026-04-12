@@ -20,6 +20,10 @@ func NewHttpProxy(config config.HttpProxyConfig) *HttpProxy {
 	return &HttpProxy{config: config}
 }
 
+func (*HttpProxy) Init() error {
+	return nil
+}
+
 func (h *HttpProxy) Connect(sni string, timeout time.Duration) (net.Conn, error) {
 	// dial upstream HTTP proxy
 	upstreamConn, err := net.Dial("tcp", h.config.Address)

@@ -20,6 +20,7 @@ type Proxy struct {
 }
 
 type Upstream interface {
+	Init() error
 	Connect(sni string, timeout time.Duration) (net.Conn, error)
 	Close() error
 }
@@ -29,24 +30,24 @@ func NewProxy(config config.ProxyConfig) *Proxy {
 }
 
 func (p *Proxy) Init() error {
-	var up Upstream
-
 	switch p.config.UpstreamType {
 	case config.UpstreamTypeHttpProxy:
-		up = upstream.NewHttpProxy(p.config.HttpProxyConfig)
+		p.upstream = upstream.NewHttpProxy(p.config.HttpProxyConfig)
 	case config.UpstreamTypeSSH:
-		up = upstream.NewSSH(p.config.SSHConfig)
+		p.upstream = upstream.NewSSH(p.config.SSHConfig)
 	case config.UpstreamTypeVLESSReality:
-		up = upstream.NewVlessReality(p.config.VLESSRealityConfig)
+		p.upstream = upstream.NewVlessReality(p.config.VLESSRealityConfig)
 	case config.UpstreamTypeWireguard:
-		up = upstream.NewWireguard(p.config.WireguardConfig)
+		p.upstream = upstream.NewWireguard(p.config.WireguardConfig)
 	case "":
 		return errors.New("upstream type not specified")
 	default:
 		return fmt.Errorf("unsupported upstream type: %s", p.config.UpstreamType)
 	}
 
-	p.upstream = up
+	if err := p.upstream.Init(); err != nil {
+		return fmt.Errorf("failed to initialize upstream: %w", err)
+	}
 
 	return nil
 }
