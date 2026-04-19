@@ -1,7 +1,7 @@
 # github.com/andybalholm/brotli v1.0.6
 ## explicit; go 1.12
 github.com/andybalholm/brotli
-# github.com/cloudflare/circl v1.6.1
+# github.com/cloudflare/circl v1.6.3
 ## explicit; go 1.22.0
 github.com/cloudflare/circl/internal/sha3
 github.com/cloudflare/circl/sign
@@ -31,15 +31,18 @@ github.com/klauspost/compress/internal/cpuinfo
 github.com/klauspost/compress/internal/snapref
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
-# github.com/kr/text v0.2.0
-## explicit
-# github.com/miekg/dns v1.1.68
-## explicit; go 1.23.0
+# github.com/klauspost/cpuid/v2 v2.3.0
+## explicit; go 1.22
+github.com/klauspost/cpuid/v2
+# github.com/kr/pretty v0.3.1
+## explicit; go 1.12
+# github.com/miekg/dns v1.1.72
+## explicit; go 1.24.0
 github.com/miekg/dns
-# github.com/pires/go-proxyproto v0.8.1
+# github.com/pires/go-proxyproto v0.11.0
 ## explicit; go 1.24
 github.com/pires/go-proxyproto
-# github.com/refraction-networking/utls v1.8.1
+# github.com/refraction-networking/utls v1.8.3-0.20260301010127-aa6edf4b11af
 ## explicit; go 1.24
 github.com/refraction-networking/utls
 github.com/refraction-networking/utls/dicttls
@@ -67,15 +70,15 @@ github.com/sagernet/sing/common/format
 github.com/sagernet/sing/common/metadata
 github.com/sagernet/sing/common/network
 github.com/sagernet/sing/common/x/constraints
-# github.com/xtls/reality v0.0.0-20251014195629-e4eec4520535
-## explicit; go 1.24
+# github.com/xtls/reality v0.0.0-20260322125925-9234c772ba8f
+## explicit; go 1.24.0
 github.com/xtls/reality
 github.com/xtls/reality/fips140tls
 github.com/xtls/reality/hpke
 github.com/xtls/reality/tls12
 github.com/xtls/reality/tls13
-# github.com/xtls/xray-core v1.251015.0
-## explicit; go 1.25
+# github.com/xtls/xray-core v1.260327.0
+## explicit; go 1.26
 github.com/xtls/xray-core/common
 github.com/xtls/xray-core/common/bitmask
 github.com/xtls/xray-core/common/buf
@@ -115,13 +118,14 @@ github.com/xtls/xray-core/features/stats
 github.com/xtls/xray-core/main/confloader
 github.com/xtls/xray-core/transport
 github.com/xtls/xray-core/transport/internet
+github.com/xtls/xray-core/transport/internet/finalmask
 github.com/xtls/xray-core/transport/internet/reality
 github.com/xtls/xray-core/transport/internet/stat
 github.com/xtls/xray-core/transport/internet/tls
 github.com/xtls/xray-core/transport/internet/udp
 github.com/xtls/xray-core/transport/pipe
-# golang.org/x/crypto v0.45.0
-## explicit; go 1.24.0
+# golang.org/x/crypto v0.50.0
+## explicit; go 1.25.0
 golang.org/x/crypto/blake2s
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
@@ -137,11 +141,14 @@ golang.org/x/crypto/poly1305
 golang.org/x/crypto/sha3
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
-# golang.org/x/mod v0.29.0
-## explicit; go 1.24.0
+# golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842
+## explicit; go 1.20
+golang.org/x/exp/constraints
+# golang.org/x/mod v0.34.0
+## explicit; go 1.25.0
 golang.org/x/mod/semver
-# golang.org/x/net v0.47.0
-## explicit; go 1.24.0
+# golang.org/x/net v0.52.0
+## explicit; go 1.25.0
 golang.org/x/net/bpf
 golang.org/x/net/dns/dnsmessage
 golang.org/x/net/http/httpguts
@@ -149,29 +156,30 @@ golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/httpcommon
+golang.org/x/net/internal/httpsfv
 golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
-# golang.org/x/sync v0.18.0
-## explicit; go 1.24.0
+# golang.org/x/sync v0.20.0
+## explicit; go 1.25.0
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.38.0
-## explicit; go 1.24.0
+# golang.org/x/sys v0.43.0
+## explicit; go 1.25.0
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.31.0
-## explicit; go 1.24.0
+# golang.org/x/text v0.36.0
+## explicit; go 1.25.0
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-# golang.org/x/time v0.7.0
-## explicit; go 1.18
+# golang.org/x/time v0.12.0
+## explicit; go 1.23.0
 golang.org/x/time/rate
-# golang.org/x/tools v0.38.0
-## explicit; go 1.24.0
+# golang.org/x/tools v0.43.0
+## explicit; go 1.25.0
 golang.org/x/tools/go/ast/edge
 golang.org/x/tools/go/ast/inspector
 golang.org/x/tools/go/gcexportdata
@@ -207,7 +215,7 @@ golang.zx2c4.com/wireguard/rwcancel
 golang.zx2c4.com/wireguard/tai64n
 golang.zx2c4.com/wireguard/tun
 golang.zx2c4.com/wireguard/tun/netstack
-# google.golang.org/grpc v1.76.0
+# google.golang.org/grpc v1.79.3
 ## explicit; go 1.24.0
 google.golang.org/grpc/attributes
 google.golang.org/grpc/credentials
@@ -215,7 +223,7 @@ google.golang.org/grpc/grpclog
 google.golang.org/grpc/grpclog/internal
 google.golang.org/grpc/internal/credentials
 google.golang.org/grpc/internal/envconfig
-# google.golang.org/protobuf v1.36.10
+# google.golang.org/protobuf v1.36.11
 ## explicit; go 1.23
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
@@ -244,8 +252,8 @@ google.golang.org/protobuf/reflect/protoreflect
 google.golang.org/protobuf/reflect/protoregistry
 google.golang.org/protobuf/runtime/protoiface
 google.golang.org/protobuf/runtime/protoimpl
-# gvisor.dev/gvisor v0.0.0-20250503011706-39ed1f5ac29c
-## explicit; go 1.23.1
+# gvisor.dev/gvisor v0.0.0-20260122175437-89a5d21be8f0
+## explicit; go 1.25.5
 gvisor.dev/gvisor/pkg/atomicbitops
 gvisor.dev/gvisor/pkg/bits
 gvisor.dev/gvisor/pkg/buffer

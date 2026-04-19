@@ -272,7 +272,17 @@ func Server(ctx context.Context, conn net.Conn, config *Config) (*Conn, error) {
 			if config.Show && hs.clientHello != nil {
 				fmt.Printf("REALITY remoteAddr: %v\tforwarded SNI: %v\n", remoteAddr, hs.clientHello.serverName)
 			}
-			io.Copy(target, NewRatelimitedConn(underlying, &config.LimitFallbackUpload))
+			_, err := io.Copy(target, NewRatelimitedConn(underlying, &config.LimitFallbackUpload))
+			// close target writer when received FIN (err==nil)
+			if err == nil {
+				targetWriterCloser, ok := target.(CloseWriteConn)
+				if ok {
+					targetWriterCloser.CloseWrite()
+				}
+			} else {
+				// Close target when encountering RST (or any other errors)
+				target.Close()
+			}
 		}
 		waitGroup.Done()
 	}()
@@ -362,7 +372,7 @@ func Server(ctx context.Context, conn net.Conn, config *Config) (*Conn, error) {
 			if err != nil {
 				break
 			}
-			go func() { // TODO: Probe target's maxUselessRecords and some time-outs in advance.
+			go func() { // TODO: Probe some time-outs in advance.
 				if handshakeLen-len(s2cSaved) > 0 {
 					io.ReadFull(target, buf[:handshakeLen-len(s2cSaved)])
 				}
@@ -412,6 +422,9 @@ func Server(ctx context.Context, conn net.Conn, config *Config) (*Conn, error) {
 					}
 				}
 				time.Sleep(5 * time.Second)
+				if maxUseless, ok := GlobalMaxCSSMsgCount.Load(key); ok {
+					hs.c.MaxUselessRecords = maxUseless.(int)
+				}
 			}
 			hs.c.isHandshakeComplete.Store(true)
 			break

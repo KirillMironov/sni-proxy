@@ -285,7 +285,7 @@ func (*Stats) IsEndpointStats() {}
 //
 // +stateify savable
 type sndQueueInfo struct {
-	sndQueueMu sync.Mutex `state:"nosave"`
+	sndQueueMu sndQueueMutex `state:"nosave"`
 	TCPSndBufState
 }
 
@@ -354,7 +354,7 @@ type Endpoint struct {
 	endpointEntry `state:"nosave"`
 
 	// pendingProcessingMu protects pendingProcessing.
-	pendingProcessingMu sync.Mutex `state:"nosave"`
+	pendingProcessingMu pendingProcessingMutex `state:"nosave"`
 
 	// pendingProcessing is true if this endpoint is queued for processing
 	// to a TCP processor.
@@ -374,10 +374,10 @@ type Endpoint struct {
 
 	// lastError represents the last error that the endpoint reported;
 	// access to it is protected by the following mutex.
-	lastErrorMu sync.Mutex `state:"nosave"`
+	lastErrorMu lastErrorMutex `state:"nosave"`
 	lastError   tcpip.Error
 
-	rcvQueueMu sync.Mutex `state:"nosave"`
+	rcvQueueMu rcvQueueMutex `state:"nosave"`
 
 	// +checklocks:rcvQueueMu
 	TCPRcvBufState
@@ -834,11 +834,11 @@ func calculateTTL(route *stack.Route, ipv4TTL uint8, ipv6HopLimit int16) uint8 {
 //
 // +stateify savable
 type keepalive struct {
-	sync.Mutex `state:"nosave"`
-	idle       time.Duration
-	interval   time.Duration
-	count      int
-	unacked    int
+	keepaliveMutex `state:"nosave"`
+	idle           time.Duration
+	interval       time.Duration
+	count          int
+	unacked        int
 	// should never be a zero timer if the endpoint is not closed.
 	timer timer       `state:"nosave"`
 	waker sleep.Waker `state:"nosave"`
@@ -1196,6 +1196,14 @@ func (e *Endpoint) cleanupLocked() {
 
 	if e.timeWaitTimer != nil {
 		e.timeWaitTimer.Stop()
+	}
+
+	// Remove current EP from its lEP acceptQueue.pendingEndpoint if exists.
+	if e.h != nil && e.h.listenEP != nil {
+		lEP := e.h.listenEP
+		lEP.acceptMu.Lock()
+		delete(lEP.acceptQueue.pendingEndpoints, e)
+		lEP.acceptMu.Unlock()
 	}
 
 	// Close all endpoints that might have been accepted by TCP but not by
@@ -2917,7 +2925,8 @@ func (e *Endpoint) onICMPError(err tcpip.Error, transErr stack.TransportError, p
 
 	if e.EndpointState().connecting() {
 		e.mu.Lock()
-		if lEP := e.h.listenEP; lEP != nil {
+		if e.h != nil && e.h.listenEP != nil {
+			lEP := e.h.listenEP
 			// Remove from listening endpoints pending list.
 			lEP.acceptMu.Lock()
 			delete(lEP.acceptQueue.pendingEndpoints, e)
